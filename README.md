@@ -31,6 +31,8 @@ O formato estrutural do ID obedece à sequência:
 | **Segundos** | 2 Dígitos | Padrão 00-59. |
 
 💻 Implementações Oficiais
-🎯 Dart / Flutter / rust
+🎯 Dart / Flutter / Rust / Python
 
 🧠 Destaques da versão Rust:Segurança de Memória: O fatiamento &corpo[1..3] funciona de forma segura porque todos os caracteres gerados pela tabela Base 35 ocupam exatamente 1 byte (ASCII puro), evitando pânicos de limite UTF-8.Sem dependências externas: O código não precisa da biblioteca chrono. Ele funciona puramente através de variáveis numéricas padrão do Rust (u32), tornando-o ideal para sistemas embarcados ou WebAssembly (Wasm).
+
+🧠 Vantagens da versão em Python:Fatiamento nativo: O uso do operador de slice (corpo[1:3]) do Python torna o tratamento das substrings muito visual e direto.Busca Simples: O método .index() substitui a necessidade de iterar manualmente pelos caracteres para encontrar a posição de mapeamento da hora ou do dia.
