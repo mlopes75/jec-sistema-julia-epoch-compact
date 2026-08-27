@@ -31,13 +31,15 @@ O formato estrutural do ID obedece à sequência:
 | **Segundos** | 2 Dígitos | Padrão 00-59. |
 
 💻 Implementações Oficiais
-🎯 Dart / Flutter / Rust / Python / JavaScript / TypeScript / Kotlin
+🎯 Dart / Flutter / Rust / Python / JavaScript / TypeScript / Kotlin / Swift
 
 🧠 Destaques da versão Rust:Segurança de Memória: O fatiamento &corpo[1..3] funciona de forma segura porque todos os caracteres gerados pela tabela Base 35 ocupam exatamente 1 byte (ASCII puro), evitando pânicos de limite UTF-8.Sem dependências externas: O código não precisa da biblioteca chrono. Ele funciona puramente através de variáveis numéricas padrão do Rust (u32), tornando-o ideal para sistemas embarcados ou WebAssembly (Wasm).
 
 🧠 Vantagens da versão em Python:Fatiamento nativo: O uso do operador de slice (corpo[1:3]) do Python torna o tratamento das substrings muito visual e direto.Busca Simples: O método .index() substitui a necessidade de iterar manualmente pelos caracteres para encontrar a posição de mapeamento da hora ou do dia.
 
 🧠 Destaques da versão Kotlin:Segurança de tipos e nullability: O uso do operador ? (alias: String? = null) e da função utilitária !alias.isNullOrEmpty() protege o código contra o famoso erro de ponteiro nulo (NullPointerException).Fatiamento nativo simplificado: Kotlin estende os métodos de string do Java de forma inteligente. A função substringAfterLast('.') trata o prefixo/alias em uma única linha de maneira limpa.
+
+🧠 Destaques da versão Swift:Coleções e Índices Estritos: Diferente de outras linguagens, as strings em Swift não aceitam indexação numérica direta (string[1]) por questões de arquitetura Unicode. Transformar o bloco em Array(corpo) resolve esse problema e deixa os fatiamentos (chars[1...2]) extremamente limpos e rápidos.Segurança com Erros Lançáveis (throws): A função de decodificação usa try/catch nativo para garantir que qualquer ID corrompido ou caractere fora da tabela Base 35 seja abortado sem quebrar o aplicativo de forma abrupta.
 
 
 🧠 Destaques da versão JavaScript:Indexação de meses: Diferente das outras linguagens, o objeto Date do JavaScript inicia a contagem de meses em 0 (Janeiro é 0 e Dezembro é 11). A lógica de conversão foi adaptada sutilmente na linha dt.getMonth() para manter total compatibilidade com o padrão original do repositório.Validação por Regex: O uso da expressão regular /^[1-6]$/.test() valida instantaneamente se o caractere do dia pertence à faixa estendida numérica (dias 26 a 31).
