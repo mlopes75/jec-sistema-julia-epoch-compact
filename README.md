@@ -31,7 +31,7 @@ O formato estrutural do ID obedece à sequência:
 | **Segundos** | 2 Dígitos | Padrão 00-59. |
 
 💻 Implementações Oficiais
-🎯 Dart / Flutter / Rust / Python / JavaScript
+🎯 Dart / Flutter / Rust / Python / JavaScript / TypeScript
 
 🧠 Destaques da versão Rust:Segurança de Memória: O fatiamento &corpo[1..3] funciona de forma segura porque todos os caracteres gerados pela tabela Base 35 ocupam exatamente 1 byte (ASCII puro), evitando pânicos de limite UTF-8.Sem dependências externas: O código não precisa da biblioteca chrono. Ele funciona puramente através de variáveis numéricas padrão do Rust (u32), tornando-o ideal para sistemas embarcados ou WebAssembly (Wasm).
 
