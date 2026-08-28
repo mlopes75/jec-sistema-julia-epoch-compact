@@ -24,7 +24,7 @@ contract SistemaJuliaFixo {
         
         bytes memory temporal = new bytes(10);
 
-        // 1. Século (CORRIGIDO: índice direto)
+        // 1. Século índice direto
         uint256 seculo = anoCompleto / 100;
         if (seculo < 25) {
             // Século 20 (2000-2099) → índice 20 → 'W' ✅
