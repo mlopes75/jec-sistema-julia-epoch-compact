@@ -16,11 +16,24 @@ const BASE35_ALPHA = "ABCDEFGHIJKLMNPQRSTUVWXYZ"
 
 // Encode converte um objeto time.Time para uma String JEC compactada.
 func (j JuliaEpochCompact) Encode(dt time.Time, alias string) string {
-	seculo := "V" // Século XXI fixo
+	seculoCompleto := dt.Year() / 100
+	var seculo string
+
+	// Lógica milenar idêntica ao Solidity e JS
+	if seculoCompleto <= 25 {
+		seculo = string(BASE35_ALPHA[seculoCompleto-1])
+	} else {
+		digitoSeculo := seculoCompleto - 25
+		if digitoSeculo > 9 {
+			panic("Século fora do limite suportado.")
+		}
+		seculo = strconv.Itoa(digitoSeculo)
+	}
+
 	ano := fmt.Sprintf("%02d", dt.Year()%100)
 
-	// Mês (A-L -> Jan-Dez)
-	mes := string(rune(65 + int(dt.Month()) - 1))
+	// Mês mapeado estritamente através da tabela oficial
+	mes := string(BASE35_ALPHA[int(dt.Month())-1])
 
 	// Dia (A-Z sem O para 1-25; 1-6 para 26-31)
 	var dia string
@@ -36,15 +49,15 @@ func (j JuliaEpochCompact) Encode(dt time.Time, alias string) string {
 	minutos := fmt.Sprintf("%02d", dt.Minute())
 	segundos := fmt.Sprintf("%02d", dt.Second())
 
+	prefixo := ""
 	if alias != "" {
-		return fmt.Sprintf("%s.%s%s%s%s%s%s%s", alias, seculo, ano, mes, dia, hora, minutos, segundos)
+		prefixo = alias + "."
 	}
-	return fmt.Sprintf("%s%s%s%s%s%s%s", seculo, ano, mes, dia, hora, minutos, segundos)
+	return fmt.Sprintf("%s%s%s%s%s%s%s%s", prefixo, seculo, ano, mes, dia, hora, minutos, segundos)
 }
 
 // Decode converte uma String JEC de volta para um objeto time.Time válido.
 func (j JuliaEpochCompact) Decode(jecID string) (time.Time, error) {
-	// Remove o prefixo/alias se ele existir na string
 	partes := strings.Split(jecID, ".")
 	corpo := partes[len(partes)-1]
 
@@ -52,7 +65,6 @@ func (j JuliaEpochCompact) Decode(jecID string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("formato JEC inválido: o bloco deve ter 10 caracteres")
 	}
 
-	// Fatiamento preciso baseado na estrutura posicional rígida de 10 caracteres
 	charSeculo := string(corpo[0])
 	anoDigitos, err := strconv.Atoi(corpo[1:3])
 	if err != nil {
@@ -70,14 +82,26 @@ func (j JuliaEpochCompact) Decode(jecID string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("segundos inválidos: %v", err)
 	}
 
-	// Reconstrução do Ano
-	ano := 1900 + anoDigitos
-	if charSeculo == "V" {
-		ano = 2000 + anoDigitos
+	// Reconstrução Dinâmica do Século
+	var seculoCompleto int
+	isDigitSeculo, _ := regexp.MatchString("^[1-9]$", charSeculo)
+	if isDigitSeculo {
+		seculoNum, _ := strconv.Atoi(charSeculo)
+		seculoCompleto = seculoNum + 25
+	} else {
+		idxSeculo := strings.Index(BASE35_ALPHA, charSeculo)
+		if idxSeculo == -1 {
+			return time.Time{}, fmt.Errorf("caractere de século inválido: %s", charSeculo)
+		}
+		seculoCompleto = idxSeculo + 1
 	}
+	ano := (seculoCompleto * 100) + anoDigitos
 
-	// Reconstrução do Mês
-	mes := int(charMes[0]) - 65 + 1
+	// Reconstrução do Mês usando a tabela oficial
+	mes := strings.Index(BASE35_ALPHA, charMes) + 1
+	if mes == 0 {
+		return time.Time{}, fmt.Errorf("caractere de mês inválido: %s", charMes)
+	}
 
 	// Reconstrução do Dia
 	var dia int
@@ -99,7 +123,6 @@ func (j JuliaEpochCompact) Decode(jecID string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("caractere de hora inválido: %s", charHora)
 	}
 
-	// Montagem do objeto de tempo (Usando fuso local padrão para o teste)
 	return time.Date(ano, time.Month(mes), dia, hora, minuto, segundo, 0, time.Local), nil
 }
 
@@ -108,7 +131,6 @@ func main() {
 	jec := JuliaEpochCompact{}
 	layout := "02/01/2006 15:04:05"
 
-	// Caso 1: Teste com Dia menor ou igual a 25
 	data1 := time.Date(2026, time.August, 15, 14, 30, 45, 0, time.Local)
 	id1 := jec.Encode(data1, "TX")
 	resultado1, err1 := jec.Decode(id1)
@@ -127,7 +149,6 @@ func main() {
 		fmt.Printf("-> Status:    %s\n\n", status)
 	}
 
-	// Caso 2: Teste com Dia limite (Maior que 25)
 	data2 := time.Date(2026, time.December, 28, 23, 59, 0, 0, time.Local)
 	id2 := jec.Encode(data2, "")
 	resultado2, err2 := jec.Decode(id2)
