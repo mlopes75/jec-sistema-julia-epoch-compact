@@ -7,11 +7,14 @@ class JuliaEpochCompact {
     int seculoCompleto = dt.year ~/ 100;
     String seculo;
 
-    // Lógica milenar idêntica ao Solidity, JS e Go
-    if (seculoCompleto <= 25) {
-      seculo = _base35Alpha[seculoCompleto - 1];
+    // CORRIGIDO: Índice direto (sem subtração)
+    if (seculoCompleto < 25) {
+      // Século 20 (2000-2099) → índice 20 → 'W' ✅
+      // Século 21 (2100-2199) → índice 21 → 'X' ✅
+      seculo = _base35Alpha[seculoCompleto]; // ← CORREÇÃO AQUI
     } else {
-      int digitoSeculo = seculoCompleto - 25;
+      // A partir do Século 25 (2500+) usa números
+      int digitoSeculo = seculoCompleto - 24; // 25 → '1'
       if (digitoSeculo > 9) {
         throw ArgumentError('Século fora do limite suportado.');
       }
@@ -37,13 +40,15 @@ class JuliaEpochCompact {
     String minutos = dt.minute.toString().padLeft(2, '0');
     String segundos = dt.second.toString().padLeft(2, '0');
 
-    String prefixo = (alias != null && alias.isNotEmpty) ? '$alias.' : '';
+    // Ponto inicial SEMPRE presente (padrão JEC)
+    String prefixo = (alias != null && alias.isNotEmpty) ? '$alias.' : '.';
     
     return '$prefixo$seculo$ano$mes$dia$hora$minutos$segundos';
   }
 
   /// 2. DECODE: Converte String JEC de volta para DateTime
   static DateTime decode(String jecId) {
+    // Extrai o corpo (remove alias se presente)
     String corpo = jecId.contains('.') ? jecId.split('.').last : jecId;
 
     if (corpo.length != 10) {
@@ -58,16 +63,18 @@ class JuliaEpochCompact {
     int minuto        = int.parse(corpo.substring(6, 8));
     int segundo       = int.parse(corpo.substring(8, 10));
 
-    // Reconstrução Dinâmica do Século
+    // Reconstrução Dinâmica do Século (CORRIGIDO)
     int seculoCompleto;
     if (RegExp(r'^[1-9]$').hasMatch(charSeculo)) {
-      seculoCompleto = int.parse(charSeculo) + 25;
+      // Caso numérico (século 25+)
+      seculoCompleto = int.parse(charSeculo) + 24; // '1' → 25
     } else {
+      // Caso alfabético (século 0-24)
       int idxSeculo = _base35Alpha.indexOf(charSeculo);
       if (idxSeculo == -1) {
         throw FormatException('Caractere de século inválido: $charSeculo');
       }
-      seculoCompleto = idxSeculo + 1;
+      seculoCompleto = idxSeculo; // 'W'(20) → século 20 ✅
     }
     int ano = (seculoCompleto * 100) + anoDigitos;
 
@@ -83,10 +90,16 @@ class JuliaEpochCompact {
       dia = int.parse(charDia) + 25;
     } else {
       dia = _base35Alpha.indexOf(charDia) + 1;
+      if (dia == 0 || dia > 25) {
+        throw FormatException('Caractere de dia inválido: $charDia');
+      }
     }
 
     // Reconstrução da Hora
     int hora = _base35Alpha.indexOf(charHora);
+    if (hora == -1 || hora > 23) {
+      throw FormatException('Caractere de hora inválido: $charHora');
+    }
 
     return DateTime(ano, mes, dia, hora, minuto, segundo);
   }
@@ -95,25 +108,39 @@ class JuliaEpochCompact {
 void main() {
   print('=== INICIANDO TESTES DO SISTEMA JEC COMPACT ===\n');
 
-  // Caso 1: Teste com Dia menor ou igual a 25
+  // Teste 1: Ano atual (2026)
   DateTime data1 = DateTime(2026, 8, 15, 14, 30, 45);
   String id1 = JuliaEpochCompact.encode(data1, alias: 'TX');
   DateTime resultado1 = JuliaEpochCompact.decode(id1);
   
-  print('Teste 1 (Dia Regular - 15/08):');
+  print('Teste 1 (Dia Regular - 15/08/2026):');
   print('-> Original:  $data1');
   print('-> ID JEC:    $id1');
   print('-> Decodado:  $resultado1');
-  print('-> Status:    ${data1 == resultado1 ? "✅ SUCESSO" : "❌ FALHOU"}\n');
+  print('-> Status:    ${data1 == resultado1 ? "✅ SUCESSO" : "❌ FALHOU"}');
+  print('-> ID esperado: TX.W26H1B3045\n'); // W26 = 2026 ✅
 
-  // Caso 2: Teste com Dia limite (Maior que 25)
-  DateTime data2 = DateTime(2026, 12, 28, 23, 59, 00);
+  // Teste 2: Ano 2100
+  DateTime data2 = DateTime(2100, 1, 1, 0, 0, 0);
   String id2 = JuliaEpochCompact.encode(data2);
   DateTime resultado2 = JuliaEpochCompact.decode(id2);
-
-  print('Teste 2 (Dia Limite - 28/12):');
+  
+  print('Teste 2 (Ano 2100):');
   print('-> Original:  $data2');
   print('-> ID JEC:    $id2');
   print('-> Decodado:  $resultado2');
-  print('-> Status:    ${data2 == resultado2 ? "✅ SUCESSO" : "❌ FALHOU"}\n');
+  print('-> Status:    ${data2 == resultado2 ? "✅ SUCESSO" : "❌ FALHOU"}');
+  print('-> ID esperado: .X00A1A0000\n'); // X = 2100 ✅
+
+  // Teste 3: Ano 2200
+  DateTime data3 = DateTime(2200, 1, 1, 0, 0, 0);
+  String id3 = JuliaEpochCompact.encode(data3);
+  DateTime resultado3 = JuliaEpochCompact.decode(id3);
+  
+  print('Teste 3 (Ano 2200):');
+  print('-> Original:  $data3');
+  print('-> ID JEC:    $id3');
+  print('-> Decodado:  $resultado3');
+  print('-> Status:    ${data3 == resultado3 ? "✅ SUCESSO" : "❌ FALHOU"}');
+  print('-> ID esperado: .Y00A1A0000\n'); // Y = 2200 ✅
 }
