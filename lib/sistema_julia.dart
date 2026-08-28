@@ -16,16 +16,15 @@ abstract final class SistemaJulia {
   static String gerarID({String alias = "", DateTime? dataHora}) {
     final DateTime tempo = (dataHora ?? DateTime.now()).toUtc();
 
-    // 1. Século na Base 35 com Escalabilidade Milenar (ex: 2026 -> 'V')
-    final int seculoCompleto = tempo.year ~/ 100;
+    // 1. Século na Base 35 (2026 ~/ 100 = 20 -> Índice 20 é 'V' no alfabeto JEC)
+    final int indiceSeculo = tempo.year ~/ 100;
     String seculoStr;
     
-    if (seculoCompleto <= 25) {
-      // Século 20 vira índice 19 ('V'). Século 25 vira índice 24 ('Z')
-      seculoStr = _letrasSemO[seculoCompleto - 1];
+    if (indiceSeculo < 25) {
+      seculoStr = _letrasSemO[indiceSeculo];
     } else {
-      // A partir do Século 26 (Ano 2600), começa de 1 a 9
-      final int digitoSeculo = seculoCompleto - 25;
+      // Regra de transição milenar caso ultrapasse o limite do alfabeto (Ano 2500+)
+      final int digitoSeculo = indiceSeculo - 24;
       if (digitoSeculo > 9) {
         throw ArgumentError('Século fora do limite suportado pelo protocolo JEC.');
       }
@@ -37,7 +36,7 @@ abstract final class SistemaJulia {
         .toString()
         .padLeft(2, '0');
 
-    // 3. Mês mapeado de 'A' (Jan) a 'L' (Dez) através da tabela oficial
+    // 3. Mês mapeado de 'A' (Jan) a 'L' (Dez)
     final String mesStr = _letrasSemO[tempo.month - 1];
 
     // 4. Dia (1 a 25 usam 'A'-'Z' sem 'O'; 26 a 31 usam '1'-'6')
@@ -56,7 +55,7 @@ abstract final class SistemaJulia {
         .toString()
         .padLeft(2, '0');
 
-    // Construção do prefixo/alias (Garante o ponto inicial caso o alias seja vazio)
+    // Construção do prefixo/alias (Mantém o ponto exigido pelo padrão)
     final String prefixo = alias.isNotEmpty ? "$alias." : ".";
 
     return "$prefixo$seculoStr$anoStr$mesStr$diaStr$horaStr$minutosStr$segundosStr";
@@ -73,9 +72,6 @@ abstract final class SistemaJulia {
 }
 
 void main() {
-  // Teste com o ano atual (2026) -> Deve imprimir: .V26...
-  print("Atual JEC: ${SistemaJulia.gerarID()}");
-  
-  // Teste de validação com Alias -> Deve imprimir: TX.V26...
-  print("Com Alias: ${SistemaJulia.gerarID(alias: 'TX')}");
+  // Execução do teste -> Retorna exatamente: .V26...
+  print("Atual: ${SistemaJulia.gerarID()}");
 }
