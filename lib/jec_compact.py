@@ -14,7 +14,7 @@ class JuliaEpochCompact:
         if seculo_completo < 25:
             # Século 20 (2000-2099) → índice 20 → 'W' ✅
             # Século 21 (2100-2199) → índice 21 → 'X' ✅
-            seculo = cls.BASE35_ALPHA[seculo_completo]  # ← CORREÇÃO AQUI
+            seculo = cls.BASE35_ALPHA[seculo_completo] 
         else:
             # A partir do Século 25 (2500+) usa números
             digito_seculo = seculo_completo - 24  # 25 → '1'
