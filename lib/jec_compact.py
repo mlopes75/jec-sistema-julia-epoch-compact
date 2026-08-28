@@ -8,11 +8,21 @@ class JuliaEpochCompact:
     @classmethod
     def encode(cls, dt: datetime, alias: str = None) -> str:
         """1. ENCODE: Converte um datetime para String JEC"""
-        seculo = "V"  # Século XXI fixo
+        seculo_completo = dt.year // 100
+        
+        # Lógica milenar idêntica ao Solidity e ecossistema JEC
+        if seculo_completo <= 25:
+            seculo = cls.BASE35_ALPHA[seculo_completo - 1]
+        else:
+            digito_seculo = seculo_completo - 25
+            if digito_seculo > 9:
+                raise ValueError("Século fora do limite suportado.")
+            seculo = str(digito_seculo)
+
         ano = f"{dt.year % 100:02d}"
         
-        # Mês (A-L)
-        mes = chr(65 + (dt.month - 1))
+        # Mês mapeado estritamente através da tabela oficial
+        mes = cls.BASE35_ALPHA[dt.month - 1]
 
         # Dia (A-Z sem O para 1-25; 1-6 para 26-31)
         if dt.day <= 25:
@@ -33,13 +43,11 @@ class JuliaEpochCompact:
     @classmethod
     def decode(cls, jec_id: str) -> datetime:
         """2. DECODE: Converte String JEC de volta para datetime"""
-        # Remove o prefixo/alias se ele existir na string
         corpo = jec_id.split('.')[-1]
 
         if len(corpo) != 10:
             raise ValueError("Formato JEC inválido. O bloco temporal deve ter exatamente 10 caracteres.")
 
-        # Divisão cirúrgica das posições pelas fatias (slices) do Python
         char_seculo = corpo[0]
         ano_digitos = int(corpo[1:3])
         char_mes = corpo[3]
@@ -48,11 +56,20 @@ class JuliaEpochCompact:
         minuto = int(corpo[6:8])
         segundo = int(corpo[8:10])
 
-        # Reconstrução do Ano (Século XXI para 'V')
-        ano = 2000 + ano_digitos if char_seculo == "V" else 1900 + ano_digitos
+        # Reconstrução Dinâmica do Século
+        if char_seculo.isdigit() and '1' <= char_seculo <= '9':
+            seculo_completo = int(char_seculo) + 25
+        else:
+            if char_seculo not in cls.BASE35_ALPHA:
+                raise ValueError(f"Caractere de século inválido: {char_seculo}")
+            seculo_completo = cls.BASE35_ALPHA.index(char_seculo) + 1
+            
+        ano = (seculo_completo * 100) + ano_digitos
 
-        # Reconstrução do Mês
-        mes = ord(char_mes) - 65 + 1
+        # Reconstrução do Mês usando a tabela oficial
+        if char_mes not in cls.BASE35_ALPHA:
+            raise ValueError(f"Caractere de mês inválido: {char_mes}")
+        mes = cls.BASE35_ALPHA.index(char_mes) + 1
 
         # Reconstrução do Dia
         if char_dia.isdigit() and '1' <= char_dia <= '6':
