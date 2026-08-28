@@ -16,15 +16,16 @@ abstract final class SistemaJulia {
   static String gerarID({String alias = "", DateTime? dataHora}) {
     final DateTime tempo = (dataHora ?? DateTime.now()).toUtc();
 
-    // 1. Século na Base 35 (2026 ~/ 100 = 20 -> Índice 20 é 'V' no alfabeto JEC)
+    // 1. Século na Base 35 (2026 ~/ 100 = 20 -> Índice 20 é 'W' no alfabeto JEC)
+    // Século XXI (2000-2099) = W, XXII (2100-2199) = X, XXIII (2200-2299) = Y, XXIV (2300-2399) = Z
     final int indiceSeculo = tempo.year ~/ 100;
     String seculoStr;
     
     if (indiceSeculo < 25) {
-      seculoStr = _letrasSemO[indiceSeculo];
+      seculoStr = _letrasSemO[indiceSeculo]; // Índice direto, sem subtração
     } else {
-      // Regra de transição milenar caso ultrapasse o limite do alfabeto (Ano 2500+)
-      final int digitoSeculo = indiceSeculo - 24;
+      // Regra de transição milenar (a partir do ano 2400 usa números)
+      final int digitoSeculo = indiceSeculo - 24; // 24 → '1', 25 → '2', ...
       if (digitoSeculo > 9) {
         throw ArgumentError('Século fora do limite suportado pelo protocolo JEC.');
       }
@@ -69,6 +70,11 @@ abstract final class SistemaJulia {
     );
     return gerarID(alias: alias, dataHora: data);
   }
+}
+
+void main() {
+  // Teste: Deve retornar .W26... (Século XXI = W)
+  print("Atual: ${SistemaJulia.gerarID()}");
 }
 
 void main() {
