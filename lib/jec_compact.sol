@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 contract SistemaJuliaFixo {
-    // 25 caracteres (Sem o 'O')
+    // 25 caracteres (Sem o 'O') - índices 0 a 24
     bytes constant ALFABETO = "ABCDEFGHIJKLMNPQRSTUVWXYZ"; 
 
     function gerarIDJulia(
@@ -14,16 +14,27 @@ contract SistemaJuliaFixo {
         uint256 minuto,
         uint256 segundo
     ) public pure returns (string memory) {
+        // ===== VALIDAÇÕES =====
+        require(mes >= 1 && mes <= 12, "Mes invalido (1-12)");
+        require(dia >= 1 && dia <= 31, "Dia invalido (1-31)");
+        require(hora <= 23, "Hora invalida (0-23)");
+        require(minuto <= 59, "Minuto invalido (0-59)");
+        require(segundo <= 59, "Segundo invalido (0-59)");
+        require(anoCompleto >= 2000 && anoCompleto <= 9999, "Ano fora do limite (2000-9999)");
+        
         bytes memory temporal = new bytes(10);
 
-        // 1. Século (Mapeia século 20 para o índice 19 -> 'V')
+        // 1. Século (CORRIGIDO: índice direto)
         uint256 seculo = anoCompleto / 100;
-        if (seculo <= 25) {
-            // Século 20 vira índice 19 ('V'). Século 25 vira índice 24 ('Z')
-            temporal[0] = ALFABETO[seculo - 1]; 
+        if (seculo < 25) {
+            // Século 20 (2000-2099) → índice 20 → 'W' ✅
+            // Século 21 (2100-2199) → índice 21 → 'X' ✅
+            // Século 22 (2200-2299) → índice 22 → 'Y' ✅
+            // Século 23 (2300-2399) → índice 23 → 'Z' ✅
+            temporal[0] = ALFABETO[seculo]; // ← CORREÇÃO AQUI
         } else {
-            // A partir do Século 26 (Ano 2600), começa de 1 a 9
-            uint256 digitoSeculo = seculo - 25;
+            // A partir do Século 24 (2400+) usa números
+            uint256 digitoSeculo = seculo - 23; // 24 → '1', 25 → '2', ...
             require(digitoSeculo <= 9, "Seculo fora do limite suportado");
             temporal[0] = bytes1(uint8(48 + digitoSeculo));
         }
@@ -50,7 +61,7 @@ contract SistemaJuliaFixo {
         temporal[8] = bytes1(uint8(48 + (segundo / 10)));
         temporal[9] = bytes1(uint8(48 + (segundo % 10)));
 
-        // Formatação do retorno final
+        // Formatação do retorno final (Ponto SEMPRE presente)
         if (bytes(aliasName).length > 0) {
             return string(abi.encodePacked(aliasName, ".", temporal));
         }
