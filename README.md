@@ -10,8 +10,8 @@ O **Sistema Julia** é um algoritmo de compactação de marcas temporais (*times
    * **Meses:** Mapeados de A a L (Jan-Dez).  
    * **Dias:** Mapeados com letras de A a Z (sem o O) para os dias 1 a 25\. A partir do dia 26, transita suavemente para a numeração de 1 a 6.  
    * **Horas:** Mapeadas de A a Y (00h a 23h, saltando o O).  
-4. **Escalabilidade Milenar:** Utiliza o índice do século na Base 35 (onde o século XXI é representado por V), garantindo validade funcional sem colisões pelos próximos milénios.  
-5. **Prefixo/Alias Configurável:** Suporta a injeção de namespaces ou aliases operacionais antes do carimbo temporal (ex: alias.V26H1B1420 ou .V26H1B1420).
+4. **Escalabilidade Milenar:** Utiliza o índice do século na Base 35 (onde o século XXI é representado por W ), garantindo validade funcional sem colisões pelos próximos milénios.  
+5. **Prefixo/Alias Configurável:** Suporta a injeção de namespaces ou aliases operacionais antes do carimbo temporal (ex: alias.W26H1B1420 ou .W26H1B1420).
 
 ## **📐 Estrutura do Identificador**
 
