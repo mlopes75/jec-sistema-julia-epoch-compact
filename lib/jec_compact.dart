@@ -11,7 +11,7 @@ class JuliaEpochCompact {
     if (seculoCompleto < 25) {
       // Século 20 (2000-2099) → índice 20 → 'W' ✅
       // Século 21 (2100-2199) → índice 21 → 'X' ✅
-      seculo = _base35Alpha[seculoCompleto]; // ← CORREÇÃO AQUI
+      seculo = _base35Alpha[seculoCompleto]; 
     } else {
       // A partir do Século 25 (2500+) usa números
       int digitoSeculo = seculoCompleto - 24; // 25 → '1'
