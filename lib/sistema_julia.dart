@@ -11,21 +11,33 @@ abstract final class SistemaJulia {
   /// Gera um identificador único compacto com base em um [DateTime]
   /// ou no tempo UTC atual.
   /// 
-  /// Estrutura (9 caracteres temporais):
+  /// Estrutura (10 caracteres temporais incluindo o ponto padrão):
   /// `[ALIAS].[SÉCULO][ANO][MÊS][DIA][HORA][MINUTOS][SEGUNDOS]`
   static String gerarID({String alias = "", DateTime? dataHora}) {
     final DateTime tempo = (dataHora ?? DateTime.now()).toUtc();
 
-    // 1. Século na Base 35 (ex: 2026 ~/ 100 = 20 -> 'V')
-    final int indiceSeculo = tempo.year ~/ 100;
-    final String seculoStr = _letrasSemO[indiceSeculo];
+    // 1. Século na Base 35 com Escalabilidade Milenar (ex: 2026 -> 'V')
+    final int seculoCompleto = tempo.year ~/ 100;
+    String seculoStr;
+    
+    if (seculoCompleto <= 25) {
+      // Século 20 vira índice 19 ('V'). Século 25 vira índice 24 ('Z')
+      seculoStr = _letrasSemO[seculoCompleto - 1];
+    } else {
+      // A partir do Século 26 (Ano 2600), começa de 1 a 9
+      final int digitoSeculo = seculoCompleto - 25;
+      if (digitoSeculo > 9) {
+        throw ArgumentError('Século fora do limite suportado pelo protocolo JEC.');
+      }
+      seculoStr = digitoSeculo.toString();
+    }
 
     // 2. Ano explícito em 2 dígitos (ex: 2026 -> "26")
     final String anoStr = (tempo.year % 100)
         .toString()
         .padLeft(2, '0');
 
-    // 3. Mês mapeado de 'A' (Jan) a 'L' (Dez)
+    // 3. Mês mapeado de 'A' (Jan) a 'L' (Dez) através da tabela oficial
     final String mesStr = _letrasSemO[tempo.month - 1];
 
     // 4. Dia (1 a 25 usam 'A'-'Z' sem 'O'; 26 a 31 usam '1'-'6')
@@ -44,7 +56,7 @@ abstract final class SistemaJulia {
         .toString()
         .padLeft(2, '0');
 
-    // Construção do prefixo/alias
+    // Construção do prefixo/alias (Garante o ponto inicial caso o alias seja vazio)
     final String prefixo = alias.isNotEmpty ? "$alias." : ".";
 
     return "$prefixo$seculoStr$anoStr$mesStr$diaStr$horaStr$minutosStr$segundosStr";
@@ -61,5 +73,9 @@ abstract final class SistemaJulia {
 }
 
 void main() {
-  print("Atual: ${SistemaJulia.gerarID()}");
+  // Teste com o ano atual (2026) -> Deve imprimir: .V26...
+  print("Atual JEC: ${SistemaJulia.gerarID()}");
+  
+  // Teste de validação com Alias -> Deve imprimir: TX.V26...
+  print("Com Alias: ${SistemaJulia.gerarID(alias: 'TX')}");
 }
