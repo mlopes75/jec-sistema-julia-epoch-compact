@@ -31,7 +31,7 @@ O formato estrutural do ID obedece à sequência:
 | **Segundos** | 2 Dígitos | Padrão 00-59. |
 
 💻 Implementações Oficiais
-🎯 Dart / Flutter / Python / JavaScript / Go
+🎯 Dart / Flutter / Solidity / Python / JavaScript / Go
 
 🧠 Vantagens da versão em Python:Fatiamento nativo: O uso do operador de slice (corpo[1:3]) do Python torna o tratamento das substrings muito visual e direto.Busca Simples: O método .index() substitui a necessidade de iterar manualmente pelos caracteres para encontrar a posição de mapeamento da hora ou do dia.
 🧠 Destaques da versão Go:Fatiamento nativo em tempo constante: Operações como corpo[1:3] extraem os bytes da string de forma imediata e com alocação zero de memória extra, ideal para APIs de altíssima performance.Retorno idiomático de erros: Seguindo as boas práticas do Go, a função Decode retorna a tupla (time.Time, error) de forma explícita, obrigando o desenvolvedor a tratar falhas de conversão de dados.
