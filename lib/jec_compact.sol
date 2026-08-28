@@ -2,7 +2,8 @@
 pragma solidity ^0.8.20;
 
 contract SistemaJuliaFixo {
-    bytes constant ALFABETO = "ABCDEFGHIJKLMNPQRSTUVWXYZ";
+    // 25 caracteres (Sem o 'O')
+    bytes constant ALFABETO = "ABCDEFGHIJKLMNPQRSTUVWXYZ"; 
 
     function gerarIDJulia(
         string memory aliasName,
@@ -13,42 +14,41 @@ contract SistemaJuliaFixo {
         uint256 minuto,
         uint256 segundo
     ) public pure returns (string memory) {
-        bytes memory temporal = new bytes(9);
+        bytes memory temporal = new bytes(10);
 
-        // 1. Século (2000 -> 'V')
-        temporal[0] = ALFABETO[anoCompleto / 100];
+        // 1. Século (Mapeia século 20 para o índice 19 -> 'V')
+        uint256 seculo = anoCompleto / 100;
+        if (seculo <= 25) {
+            // Século 20 vira índice 19 ('V'). Século 25 vira índice 24 ('Z')
+            temporal[0] = ALFABETO[seculo - 1]; 
+        } else {
+            // A partir do Século 26 (Ano 2600), começa de 1 a 9
+            uint256 digitoSeculo = seculo - 25;
+            require(digitoSeculo <= 9, "Seculo fora do limite suportado");
+            temporal[0] = bytes1(uint8(48 + digitoSeculo));
+        }
 
         // 2 e 3. Ano (26 -> '2','6')
         uint256 ano = anoCompleto % 100;
         temporal[1] = bytes1(uint8(48 + (ano / 10)));
         temporal[2] = bytes1(uint8(48 + (ano % 10)));
 
-        // 4. Mês (8 -> 'H')
+        // 4. Mês (Mapeamento A-L)
         temporal[3] = ALFABETO[mes - 1];
 
         // 5. Dia (1..25 -> A..Z sem O | 26..31 -> 1..6)
         temporal[4] = (dia <= 25) ? ALFABETO[dia - 1] : bytes1(uint8(48 + (dia - 25)));
 
-        // 6. Hora (13 -> 'N')
+        // 6. Hora (0..23 -> A..Y sem O)
         temporal[5] = ALFABETO[hora];
 
-        // 7 e 8. Minuto (03 -> '0','3')
+        // 7 e 8. Minuto (00..59 -> '0','0')
         temporal[6] = bytes1(uint8(48 + (minuto / 10)));
         temporal[7] = bytes1(uint8(48 + (minuto % 10)));
 
-        // 9. Segundo (09 -> '0','9') -- ajusta para o último caractere
-        bytes memory id9 = abi.encodePacked(
-            temporal[0], temporal[1], temporal[2], temporal[3], 
-            temporal[4], temporal[5], temporal[6], temporal[7], 
-            bytes1(uint8(48 + (segundo / 10))), bytes1(uint8(48 + (segundo % 10)))
-        );
-
-        // Nota: encodePacked ajusta o tamanho exato dos 9 caracteres temporais
-        bytes memory idFinal = new bytes(9);
-        for(uint i = 0; i < 9; i++) {
-            if(i < 8) idFinal[i] = id9[i];
-            else idFinal[8] = bytes1(uint8(48 + (segundo % 10))); // garante 9 chars
-        }
+        // 9 e 10. Segundo (00..59 -> '0','0')
+        temporal[8] = bytes1(uint8(48 + (segundo / 10)));
+        temporal[9] = bytes1(uint8(48 + (segundo % 10)));
 
         // Formatação do retorno final
         if (bytes(aliasName).length > 0) {
