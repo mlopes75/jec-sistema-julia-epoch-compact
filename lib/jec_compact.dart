@@ -4,11 +4,24 @@ class JuliaEpochCompact {
 
   /// 1. ENCODE: Converte DateTime para String JEC
   static String encode(DateTime dt, {String? alias}) {
-    String seculo = 'V'; // Século XXI fixo
+    int seculoCompleto = dt.year ~/ 100;
+    String seculo;
+
+    // Lógica milenar idêntica ao Solidity, JS e Go
+    if (seculoCompleto <= 25) {
+      seculo = _base35Alpha[seculoCompleto - 1];
+    } else {
+      int digitoSeculo = seculoCompleto - 25;
+      if (digitoSeculo > 9) {
+        throw ArgumentError('Século fora do limite suportado.');
+      }
+      seculo = digitoSeculo.toString();
+    }
+
     String ano = (dt.year % 100).toString().padLeft(2, '0');
     
-    // Mês (A-L)
-    String mes = String.fromCharCode(65 + (dt.month - 1));
+    // Mês mapeado estritamente através da tabela oficial
+    String mes = _base35Alpha[dt.month - 1];
 
     // Dia (A-Z sem O para 1-25; 1-6 para 26-31)
     String dia;
@@ -31,14 +44,12 @@ class JuliaEpochCompact {
 
   /// 2. DECODE: Converte String JEC de volta para DateTime
   static DateTime decode(String jecId) {
-    // Remove o prefixo/alias se ele existir na string
     String corpo = jecId.contains('.') ? jecId.split('.').last : jecId;
 
     if (corpo.length != 10) {
       throw FormatException('Formato JEC inválido. O bloco temporal deve ter exatamente 10 caracteres.');
     }
 
-    // Divisão cirúrgica das posições (Corrigido)
     String charSeculo = corpo[0];
     int anoDigitos    = int.parse(corpo.substring(1, 3));
     String charMes    = corpo[3];
@@ -47,15 +58,28 @@ class JuliaEpochCompact {
     int minuto        = int.parse(corpo.substring(6, 8));
     int segundo       = int.parse(corpo.substring(8, 10));
 
-    // Reconstrução do Ano (Século XXI para 'V')
-    int ano = (charSeculo == 'V') ? 2000 + anoDigitos : 1900 + anoDigitos;
+    // Reconstrução Dinâmica do Século
+    int seculoCompleto;
+    if (RegExp(r'^[1-9]$').hasMatch(charSeculo)) {
+      seculoCompleto = int.parse(charSeculo) + 25;
+    } else {
+      int idxSeculo = _base35Alpha.indexOf(charSeculo);
+      if (idxSeculo == -1) {
+        throw FormatException('Caractere de século inválido: $charSeculo');
+      }
+      seculoCompleto = idxSeculo + 1;
+    }
+    int ano = (seculoCompleto * 100) + anoDigitos;
 
-    // Reconstrução do Mês
-    int mes = charMes.codeUnitAt(0) - 65 + 1;
+    // Reconstrução do Mês usando a tabela oficial
+    int mes = _base35Alpha.indexOf(charMes) + 1;
+    if (mes == 0) {
+      throw FormatException('Caractere de mês inválido: $charMes');
+    }
 
     // Reconstrução do Dia
     int dia;
-    if (RegExp(r'[1-6]').hasMatch(charDia)) {
+    if (RegExp(r'^[1-6]$').hasMatch(charDia)) {
       dia = int.parse(charDia) + 25;
     } else {
       dia = _base35Alpha.indexOf(charDia) + 1;
@@ -68,7 +92,6 @@ class JuliaEpochCompact {
   }
 }
 
-/// 3. EXECUÇÃO DOS TESTES DE VALIDAÇÃO
 void main() {
   print('=== INICIANDO TESTES DO SISTEMA JEC COMPACT ===\n');
 
