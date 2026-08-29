@@ -43,5 +43,5 @@ O formato estrutural do ID obedece à sequência:
 | **Segundos** | 2 Dígitos | Padrão 00-59. |
 
 💻 Implementações Oficiais
-🎯 Dart / Flutter / Solidity / Python / JavaScript 
+🎯 Dart / Flutter / Solidity / TypeScript 
 
