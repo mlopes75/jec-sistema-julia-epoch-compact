@@ -1,144 +1,236 @@
 class JuliaEpochCompact {
-  // Tabela Base 35 oficial (Exclui totalmente a letra 'O')
-  static const String _base35Alpha = 'ABCDEFGHIJKLMNPQRSTUVWXYZ';
+  // Tabela oficial de 35 símbolos.
+  // A letra 'O' é excluída para evitar ambiguidade com '0'.
+  static const String _base35Alpha =
+      'ABCDEFGHIJKLMNPQRSTUVWXYZ';
 
-  /// 1. ENCODE: Converte DateTime para String JEC
+  static const String _base35Num =
+      '1234567890';
+
+  // 1. ENCODE: DateTime -> String JEC
   static String encode(DateTime dt, {String? alias}) {
-    int seculoCompleto = dt.year ~/ 100;
-    String seculo;
+    // Normalização para UTC.
+    dt = dt.toUtc();
 
-    // CORRIGIDO: Índice direto (sem subtração)
-    if (seculoCompleto < 25) {
-      // Século 20 (2000-2099) → índice 20 → 'W' ✅
-      // Século 21 (2100-2199) → índice 21 → 'X' ✅
-      seculo = _base35Alpha[seculoCompleto]; 
-    } else {
-      // A partir do Século 25 (2500+) usa números
-      int digitoSeculo = seculoCompleto - 24; // 25 → '1'
-      if (digitoSeculo > 9) {
-        throw ArgumentError('Século fora do limite suportado.');
-      }
-      seculo = digitoSeculo.toString();
-    }
+    // SÉCULO:
+    // 2000-2099 = W
+    // 2100-2199 = X
+    // 2200-2299 = Y
+    // 2300-2399 = Z
+    // 2400-2499 = 1
+    // ...
+    // 3400-3499 = 0
+    // 3500-3599 = A
+    // ...
+    // 5500-5599 = W  <- próximo W
+    //
+    // O ciclo possui 35 séculos.
+    final int seculoCompleto = dt.year ~/ 100;
+    final int posicao =
+        (seculoCompleto - 20 + 21) % 35;
 
-    String ano = (dt.year % 100).toString().padLeft(2, '0');
-    
-    // Mês mapeado estritamente através da tabela oficial
-    String mes = _base35Alpha[dt.month - 1];
+    final String seculo = posicao < 25
+        ? _base35Alpha[posicao]
+        : _base35Num[posicao - 25];
 
-    // Dia (A-Z sem O para 1-25; 1-6 para 26-31)
-    String dia;
-    if (dt.day <= 25) {
-      dia = _base35Alpha[dt.day - 1];
-    } else {
-      dia = (dt.day - 25).toString();
-    }
+    // ANO: últimos dois dígitos.
+    final String ano =
+        (dt.year % 100).toString().padLeft(2, '0');
 
-    // Hora (A-Y sem O para 00h-23h)
-    String hora = _base35Alpha[dt.hour];
+    // MÊS: A-L.
+    final String mes =
+        _base35Alpha[dt.month - 1];
 
-    String minutos = dt.minute.toString().padLeft(2, '0');
-    String segundos = dt.second.toString().padLeft(2, '0');
+    // DIA:
+    // 01-25 = letras
+    // 26-31 = 1-6
+    final String dia = dt.day <= 25
+        ? _base35Alpha[dt.day - 1]
+        : (dt.day - 25).toString();
 
-    // Ponto inicial SEMPRE presente (padrão JEC)
-    String prefixo = (alias != null && alias.isNotEmpty) ? '$alias.' : '.';
-    
-    return '$prefixo$seculo$ano$mes$dia$hora$minutos$segundos';
+    // HORA: 00-23 = A-Y, sem O.
+    final String hora =
+        _base35Alpha[dt.hour];
+
+    // MINUTOS: 00-59.
+    final String minutos =
+        dt.minute.toString().padLeft(2, '0');
+
+    // SEGUNDOS: 00-59.
+    final String segundos =
+        dt.second.toString().padLeft(2, '0');
+
+    // Prefixo:
+    // com alias    -> USR.
+    // sem alias    -> .
+    final String prefixo =
+        (alias != null && alias.isNotEmpty)
+            ? '$alias.'
+            : '.';
+
+    return '$prefixo'
+        '$seculo$ano$mes$dia$hora$minutos$segundos';
   }
 
-  /// 2. DECODE: Converte String JEC de volta para DateTime
+  // 2. DECODE: String JEC -> DateTime
   static DateTime decode(String jecId) {
-    // Extrai o corpo (remove alias se presente)
-    String corpo = jecId.contains('.') ? jecId.split('.').last : jecId;
+    // Remove o alias, se existir.
+    final String corpo =
+        jecId.contains('.')
+            ? jecId.split('.').last
+            : jecId;
 
     if (corpo.length != 10) {
-      throw FormatException('Formato JEC inválido. O bloco temporal deve ter exatamente 10 caracteres.');
+      throw FormatException(
+        'Formato JEC inválido.',
+      );
     }
 
-    String charSeculo = corpo[0];
-    int anoDigitos    = int.parse(corpo.substring(1, 3));
-    String charMes    = corpo[3];
-    String charDia    = corpo[4];
-    String charHora   = corpo[5];
-    int minuto        = int.parse(corpo.substring(6, 8));
-    int segundo       = int.parse(corpo.substring(8, 10));
+    final String charSeculo = corpo[0];
+    final int anoDigitos =
+        int.parse(corpo.substring(1, 3));
+    final String charMes = corpo[3];
+    final String charDia = corpo[4];
+    final String charHora = corpo[5];
+    final int minuto =
+        int.parse(corpo.substring(6, 8));
+    final int segundo =
+        int.parse(corpo.substring(8, 10));
 
-    // Reconstrução Dinâmica do Século (CORRIGIDO)
-    int seculoCompleto;
+    // Reconstrução do século.
+    //
+    // A posição 21 da tabela é W.
+    // O ciclo possui 35 posições.
+    final int posicao;
+
     if (RegExp(r'^[1-9]$').hasMatch(charSeculo)) {
-      // Caso numérico (século 25+)
-      seculoCompleto = int.parse(charSeculo) + 24; // '1' → 25
+      posicao =
+          25 + _base35Num.indexOf(charSeculo);
+    } else if (charSeculo == '0') {
+      posicao = 34;
     } else {
-      // Caso alfabético (século 0-24)
-      int idxSeculo = _base35Alpha.indexOf(charSeculo);
-      if (idxSeculo == -1) {
-        throw FormatException('Caractere de século inválido: $charSeculo');
-      }
-      seculoCompleto = idxSeculo; // 'W'(20) → século 20 ✅
-    }
-    int ano = (seculoCompleto * 100) + anoDigitos;
-
-    // Reconstrução do Mês usando a tabela oficial
-    int mes = _base35Alpha.indexOf(charMes) + 1;
-    if (mes == 0) {
-      throw FormatException('Caractere de mês inválido: $charMes');
+      posicao =
+          _base35Alpha.indexOf(charSeculo);
     }
 
-    // Reconstrução do Dia
-    int dia;
+    if (posicao < 0 || posicao >= 35) {
+      throw FormatException(
+        'Caractere de século inválido: $charSeculo',
+      );
+    }
+
+    // Converte a posição do ciclo novamente para o século.
+    final int seculoCompleto =
+        20 + ((posicao - 21 + 35) % 35);
+
+    final int ano =
+        seculoCompleto * 100 + anoDigitos;
+
+    // MÊS.
+    final int mes =
+        _base35Alpha.indexOf(charMes) + 1;
+
+    if (mes < 1 || mes > 12) {
+      throw FormatException(
+        'Caractere de mês inválido: $charMes',
+      );
+    }
+
+    // DIA.
+    final int dia;
+
     if (RegExp(r'^[1-6]$').hasMatch(charDia)) {
       dia = int.parse(charDia) + 25;
     } else {
-      dia = _base35Alpha.indexOf(charDia) + 1;
-      if (dia == 0 || dia > 25) {
-        throw FormatException('Caractere de dia inválido: $charDia');
+      dia =
+          _base35Alpha.indexOf(charDia) + 1;
+
+      if (dia < 1 || dia > 25) {
+        throw FormatException(
+          'Caractere de dia inválido: $charDia',
+        );
       }
     }
 
-    // Reconstrução da Hora
-    int hora = _base35Alpha.indexOf(charHora);
-    if (hora == -1 || hora > 23) {
-      throw FormatException('Caractere de hora inválido: $charHora');
+    // HORA.
+    final int hora =
+        _base35Alpha.indexOf(charHora);
+
+    if (hora < 0 || hora > 23) {
+      throw FormatException(
+        'Caractere de hora inválido: $charHora',
+      );
     }
 
-    return DateTime(ano, mes, dia, hora, minuto, segundo);
+    return DateTime.utc(
+      ano,
+      mes,
+      dia,
+      hora,
+      minuto,
+      segundo,
+    );
   }
 }
 
+
 void main() {
-  print('=== INICIANDO TESTES DO SISTEMA JEC COMPACT ===\n');
+  print('=== TESTES SISTEMA JULIA ===\n');
 
-  // Teste 1: Ano atual (2026)
-  DateTime data1 = DateTime(2026, 8, 15, 14, 30, 45);
-  String id1 = JuliaEpochCompact.encode(data1, alias: 'TX');
-  DateTime resultado1 = JuliaEpochCompact.decode(id1);
-  
-  print('Teste 1 (Dia Regular - 15/08/2026):');
-  print('-> Original:  $data1');
-  print('-> ID JEC:    $id1');
-  print('-> Decodado:  $resultado1');
-  print('-> Status:    ${data1 == resultado1 ? "✅ SUCESSO" : "❌ FALHOU"}');
-  print('-> ID esperado: TX.W26H1B3045\n'); // W26 = 2026 ✅
+  // 2026 -> W
+  final data1 =
+      DateTime.utc(2026, 8, 26, 1, 14, 20);
 
-  // Teste 2: Ano 2100
-  DateTime data2 = DateTime(2100, 1, 1, 0, 0, 0);
-  String id2 = JuliaEpochCompact.encode(data2);
-  DateTime resultado2 = JuliaEpochCompact.decode(id2);
-  
-  print('Teste 2 (Ano 2100):');
-  print('-> Original:  $data2');
-  print('-> ID JEC:    $id2');
-  print('-> Decodado:  $resultado2');
-  print('-> Status:    ${data2 == resultado2 ? "✅ SUCESSO" : "❌ FALHOU"}');
-  print('-> ID esperado: .X00A1A0000\n'); // X = 2100 ✅
+  final id1 =
+      JuliaEpochCompact.encode(
+    data1,
+    alias: 'USR',
+  );
 
-  // Teste 3: Ano 2200
-  DateTime data3 = DateTime(2200, 1, 1, 0, 0, 0);
-  String id3 = JuliaEpochCompact.encode(data3);
-  DateTime resultado3 = JuliaEpochCompact.decode(id3);
-  
-  print('Teste 3 (Ano 2200):');
-  print('-> Original:  $data3');
+  print('2026: $id1');
+  print('Esperado: USR.W26H1B1420');
+
+  // 2100 -> X
+  final data2 =
+      DateTime.utc(2100, 1, 1);
+
+  final id2 =
+      JuliaEpochCompact.encode(data2);
+
+  print('\n2100: $id2');
+  print('Esperado: .X00A1A0000');
+
+  // 3500 -> A
+  final data3 =
+      DateTime.utc(3500, 1, 1);
+
+  final id3 =
+      JuliaEpochCompact.encode(data3);
+
+  print('\n3500: $id3');
+  print('Esperado: .A00A1A0000');
+
+  // 5500 -> W (próximo W)
+  final data4 =
+      DateTime.utc(5500, 1, 1);
+
+  final id4 =
+      JuliaEpochCompact.encode(data4);
+
+  print('\n5500: $id4');
+  print('Esperado: .W00A1A0000');
+
+  // Teste de encode/decode.
+  final decodado =
+      JuliaEpochCompact.decode(id1);
+
+  print('\nOriginal: $data1');
+  print('Decodado: $decodado');
+  print(
+    'Status: ${data1 == decodado ? "SUCESSO" : "FALHOU"}',
+  );
+}
+
   print('-> ID JEC:    $id3');
   print('-> Decodado:  $resultado3');
   print('-> Status:    ${data3 == resultado3 ? "✅ SUCESSO" : "❌ FALHOU"}');
