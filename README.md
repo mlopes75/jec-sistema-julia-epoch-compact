@@ -18,7 +18,7 @@ Tem por objetivos :
    * **Meses:** Mapeados de A a L (Jan-Dez).  
    * **Dias:** Mapeados com letras de A a Z (sem o O) para os dias 1 a 25\. A partir do dia 26, transita suavemente para a numeração de 1 a 6.  
    * **Horas:** Mapeadas de A a Y (00h a 23h, saltando o O).  
-4. **Escalabilidade Milenar:** Escalabilidade Milenar: Utiliza tabela de 35 símbolos para representação de séculos sem colisões funcionais:
+4. **Escalabilidade Milenar:** Utiliza tabela de 35 símbolos para representação de séculos sem colisões funcionais:
 - ALFABÉTICO (25 caracteres, Posição 1-25): A B C D E F G H I J K L M N P Q R S T U V W X Y Z
 - NUMÉRICO (10 dígitos, ordem especial, Posição 26-35): 1 2 3 4 5 6 7 8 9 0
 
