@@ -46,3 +46,85 @@ O formato estrutural do ID obedece à sequência:
 💻 Implementações Oficiais
 🎯 Dart / Flutter / Solidity / TypeScript 
 
+## 🚀 Exemplos de Uso
+
+### Dart (Flutter / CLI)
+
+```dart
+import 'package:jec/sistema_julia.dart';
+
+void main() {
+  final agora = DateTime.now().toUtc();
+  final id = JuliaEpochCompact.encode(agora, alias: 'meuApp');
+  print('ID: $id'); // Ex: meuApp.V26HPP3045
+
+  final dataDecodada = JuliaEpochCompact.decode(id);
+  print('Data: $dataDecodada');
+}
+```
+
+[🔗 Código-fonte Dart](https://github.com/mlopes75/jec-sistema-julia-epoch-compact/blob/main/lib/sistema_julia.dart)
+
+---
+
+### Solidity (Ethereum / Blockchain)
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "./jec.sol";
+
+contract MeuContrato {
+    function gerarId() external pure returns (string memory) {
+        return JuliaEpochCompact.encode(
+            "meuAlias",      // alias
+            2026,            // ano
+            8,               // mês
+            15,              // dia
+            14,              // hora
+            30,              // minuto
+            45               // segundo
+        );
+    }
+    // Retorna "meuAlias.V26HPP3045"
+}
+```
+
+[🔗 Código-fonte Solidity](https://github.com/mlopes75/jec-sistema-julia-epoch-compact/blob/main/lib/jec.sol)
+
+---
+
+### TypeScript (Node.js / Navegador)
+
+```typescript
+import { JuliaEpochCompact } from './jec';
+
+const agora = new Date();
+const id = JuliaEpochCompact.encode(agora, 'meuAlias');
+console.log(`ID: ${id}`); // Ex: meuAlias.V26HPP3045
+
+const dataDecodada = JuliaEpochCompact.decode(id);
+console.log(`Data UTC: ${dataDecodada.toISOString()}`);
+```
+
+[🔗 Código-fonte TypeScript](https://github.com/mlopes75/jec-sistema-julia-epoch-compact/blob/main/lib/jec.ts)
+
+---
+
+### 💡 Observações
+
+- Todos os exemplos usam a mesma data (2026-08-15 14:30:45 UTC) para demonstrar a consistência entre as linguagens.
+- O alias (`meuAlias`) é opcional – se omitido, o ID começa com `.` (ex: `.V26HPP3045`).
+- O sistema é **imune ao Bug do Ano 2038** e não utiliza timestamps Unix de 32 bits.
+
+---
+
+### 📦 Repositório oficial
+
+- [Repositório completo](https://github.com/mlopes75/jec-sistema-julia-epoch-compact)
+- [Código-fonte Dart](https://github.com/mlopes75/jec-sistema-julia-epoch-compact/blob/main/lib/sistema_julia.dart)
+- [Contrato Solidity](https://github.com/mlopes75/jec-sistema-julia-epoch-compact/blob/main/lib/jec.sol)
+- [Pacote TypeScript](https://github.com/mlopes75/jec-sistema-julia-epoch-compact/blob/main/lib/jec.ts)
+
+---
