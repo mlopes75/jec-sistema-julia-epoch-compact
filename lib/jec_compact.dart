@@ -317,16 +317,15 @@ class JuliaEpochCompact {
   }
 }
 
-
 // ================================================================
-// TESTES
+// TESTES CORRIGIDOS
 // ================================================================
 
 void main() {
   print('=== SISTEMA JULIA ===\n');
 
   // --------------------------------------------------------------
-  // 2026 -> V
+  // Teste 1: 2026-08-15 14:30:45
   // --------------------------------------------------------------
 
   final DateTime data1 =
@@ -356,11 +355,11 @@ void main() {
     'Status:   '
     '${data1 == resultado1 ? "SUCESSO" : "FALHOU"}',
   );
-  print('Esperado: TX.V26H1B3045\n');
-
+  // ✅ Corrigido: dia 15 -> P, hora 14 -> P
+  print('Esperado: TX.V26HPP3045\n');
 
   // --------------------------------------------------------------
-  // 2100 -> W
+  // Teste 2: 2100-01-01 00:00:00
   // --------------------------------------------------------------
 
   final DateTime data2 =
@@ -378,11 +377,11 @@ void main() {
 
   print('Teste 2 - 2100');
   print('ID:       $id2');
-  print('Esperado: .W00A1A0000\n');
-
+  // ✅ Corrigido: dia 1 -> A, hora 0 -> A
+  print('Esperado: .W00AAA0000\n');
 
   // --------------------------------------------------------------
-  // 2400 -> Z
+  // Teste 3: 2400-01-01 00:00:00
   // --------------------------------------------------------------
 
   final DateTime data3 =
@@ -400,11 +399,10 @@ void main() {
 
   print('Teste 3 - 2400');
   print('ID:       $id3');
-  print('Esperado: .Z00A1A0000\n');
-
+  print('Esperado: .Z00AAA0000\n');
 
   // --------------------------------------------------------------
-  // 2500 -> 1
+  // Teste 4: 2500-01-01 00:00:00
   // --------------------------------------------------------------
 
   final DateTime data4 =
@@ -422,11 +420,10 @@ void main() {
 
   print('Teste 4 - 2500');
   print('ID:       $id4');
-  print('Esperado: .100A1A0000\n');
-
+  print('Esperado: .100AAA0000\n');
 
   // --------------------------------------------------------------
-  // 3400 -> 0
+  // Teste 5: 3400-01-01 00:00:00
   // --------------------------------------------------------------
 
   final DateTime data5 =
@@ -444,11 +441,10 @@ void main() {
 
   print('Teste 5 - 3400');
   print('ID:       $id5');
-  print('Esperado: .000A1A0000\n');
-
+  print('Esperado: .000AAA0000\n');
 
   // --------------------------------------------------------------
-  // 3500 -> A
+  // Teste 6: 3500-01-01 00:00:00
   // --------------------------------------------------------------
 
   final DateTime data6 =
@@ -466,5 +462,36 @@ void main() {
 
   print('Teste 6 - 3500');
   print('ID:       $id6');
-  print('Esperado: .A00A1A0000\n');
+  print('Esperado: .A00AAA0000\n');
+
+  // --------------------------------------------------------------
+  // Teste 7: ANO 0000 - verificação extra
+  // --------------------------------------------------------------
+
+  final DateTime data7 =
+      DateTime.utc(
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+  );
+
+  final String id7 =
+      JuliaEpochCompact.encode(data7);
+
+  final DateTime resultado7 =
+      JuliaEpochCompact.decode(id7);
+
+  print('Teste 7 - Ano 0000');
+  print('Original: $data7');
+  print('ID:       $id7');
+  print('Decodado: $resultado7');
+  print(
+    'Status:   '
+    '${data7 == resultado7 ? "SUCESSO" : "FALHOU"}',
+  );
+  // ✅ Esperado: A00AAA0000 (século A, mês A, dia A, hora A)
+  print('Esperado: .A00AAA0000\n');
 }
