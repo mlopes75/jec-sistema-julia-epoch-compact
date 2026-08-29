@@ -33,8 +33,8 @@ O formato estrutural do ID obedece à sequência:
 
 | Bloco | Tamanho | Descrição / Exemplo |
 | :---- | :---- | :---- |
-| **Alias** | Variável | Prefixo customizado opcional (ex: USR, TX, PEDIDO). |
-| **Século** | 1 Caractere | Índice do século na tabela de 25 + 10, (Século XXI \= V). |
+| **Alias** | Variável | Prefixo customizado opcional (ex: Jose, TX, PEDIDO). |
+| **Século** | 1 Caractere | Índice do século na tabela de 25 + 10, (2000 \= V). |
 | **Ano** | 2 Dígitos | Últimos dois dígitos do ano corrente (ex: 26 para 2026). |
 | **Mês** | 1 Letra | Mapeamento A-L (ex: Agosto \= H). |
 | **Dia** | 1 Caractere | A-Z (dias 1-25) e 1-6 (dias 26-31; ex: dia 26 \= 1). |
