@@ -1,6 +1,6 @@
 # **💎 JEC - Sistema  ( Julia Epoch Compact )**
 
-O **Sistema Julia** é um algoritmo de compactação de marcas temporais (*timestamps*) concebido para gerar identificadores únicos (IDs) extremamente curtos, altamente legíveis e otimizados para sistemas distribuídos, aplicações móveis e contratos inteligentes em Blockchain. O seu nome é uma homenagem de amor à filha do seu criador.
+O **Sistema Julia** é exclusivamente um algoritmo determinístico de compactação e codificação temporal, concebido para gerar identificadores temporais extremamente curtos, legíveis e sem ambiguidade visual, a partir de um instante temporal e de um alias opcional, destinados à identificação de eventos, registros, checkpoints, sites, aplicações móveis e contratos inteligentes em Blockchain e transações; sua responsabilidade termina na geração desse identificador, enquanto questões de persistência, indexação, unicidade, rejeição de duplicatas e controle de concorrência pertencem exclusivamente à camada consumidora. O seu nome é uma homenagem de amor à filha do seu criador.
 
 Tem por objetivos :
 - Timestamps compactos e legíveis para checkpoints NRS
